@@ -2,6 +2,19 @@ import vk_api
 import json
 import getpass
 import datetime
+import os
+
+DIRNAME = 'posts'
+GROUPS = [
+	'oldlentach', 'true_lentach', 'eshkin_krot',
+	'mbkhmedia', 'satyrabezsortyra', 'meduzaproject',
+	'currenttime', 'svobodaradio', 'novgaz',
+	'lentaru', 'echomsk', 'takiedela_ru', 'tj',
+	'tvrain', 'orangeeast',
+]
+
+if not os.path.exists(DIRNAME):
+	os.mkdir(DIRNAME)
 
 # authorize
 print('login:', end=' ')
@@ -15,54 +28,38 @@ vk_session.auth()
 vk = vk_session.get_api()
 
 def get_year(unixtime):
-    return datetime.datetime.utcfromtimestamp(
-        unixtime).year
+	return datetime.datetime.utcfromtimestamp(unixtime).year
 
 def get_posts(group):
-    print('Getting posts from', group)
-    offset = 0
-    posts = []
-    while True:
-        try:
-            new_posts = vk.wall.get(
-                domain=group, offset=offset,
-                count=100,
-            )['items']
-        except vk_api.exceptions.ApiError:
-            print('Rate limit reached, last group is', group)
-            break
+	offset = 0
+	posts = []
+	path = os.path.join(DIRNAME, f'file{group}.jsonl')
+	file = open(path, mode='w', encoding='utf-8')
+	while True:
+		new_posts = vk.wall.get(domain=group, offset=offset,
+								count=100)['items']
 
-        if len(new_posts) == 0:
-            break
+		if len(new_posts) == 0:
+			break
 
-        new_posts = [
-            {
-                'text': post['text'],
-                'date': post['date'],
-                'likes': post['likes']['count'],
-                'reposts': post['reposts']['count'],
-                'public': group,
-            } for post in new_posts
-        ]
-        offset += 100
-        if offset % 1000 == 0:
-            print('     offset', offset,
-                'year', get_year(new_posts[0]['date']))
-        
-        posts.extend(new_posts)
-    return posts
+		offset += 100
+		if offset % 5000 == 0:
+			print('\toffset', offset, 'year', get_year(new_posts[0]['date']))
 
-groups = [
-    'oldlentach', 'true_lentach', 'eshkin_krot',
-    'mbkhmedia', 'satyrabezsortyra', 'meduzaproject',
-    'currenttime', 'svobodaradio', 'novgaz',
-    'lentaru', 'echomsk', 'takiedela_ru', 'tj',
-    'tvrain', 'orangeeast',
-]
-posts = []
-for group in groups:
-    posts.extend(get_posts(group))
+		for post in new_posts:
+			post['group'] = group
+			file.write(json.dumps(post) + '\n')
 
-with open('posts.json', mode='w', encoding='utf-8') as file:
-    json.dump(posts, file)
+	file.close()
+
+
+for group in GROUPS:
+	try:
+		print('Getting posts from', group)
+		get_posts(group)
+	except vk_api.exceptions.ApiError:
+		print('Rate limit reached, last group is', group)
+		break
+
+
 

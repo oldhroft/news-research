@@ -5,12 +5,10 @@ import datetime
 import os
 
 DIRNAME = 'posts'
-GROUPS = [
-	'oldlentach', 'true_lentach', 'eshkin_krot',
-	'mbkhmedia', 'satyrabezsortyra', 'meduzaproject',
-	'currenttime', 'svobodaradio', 'novgaz',
-	'lentaru', 'echomsk', 'takiedela_ru', 'tj',
-	'tvrain', 'orangeeast',
+GROUPS =[
+	"bbc", "novostnaya_lenta_vk",
+	'chaosss_now', 'rublacklist', 'tsargradtv',
+	'ia_panorama', 'tv.jihad'
 ]
 
 if not os.path.exists(DIRNAME):
@@ -22,7 +20,7 @@ login = str(input())
 password = str(getpass.getpass())
 
 # Start session and get API object
-print('Authorisation in process')
+print('Authorisation...')
 vk_session = vk_api.VkApi(login, password)
 vk_session.auth()
 vk = vk_session.get_api()
@@ -32,7 +30,6 @@ def get_year(unixtime):
 
 def get_posts(group):
 	offset = 0
-	posts = []
 	path = os.path.join(DIRNAME, f'file{group}.jsonl')
 	file = open(path, mode='w', encoding='utf-8')
 	while True:
